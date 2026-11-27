@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: learning-platform
+  profiles:
+    default: dev
+  jpa:
+    open-in-view: false
