@@ -1,6 +1,4 @@
-package com.facochico.edu.user.persistence;
-
-import com.facochico.edu.user.Profile;
+package com.facochico.edu.domain.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,11 +8,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import lombok.NoArgsConstructor;
+
 import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.SEQUENCE;
+import static lombok.AccessLevel.PROTECTED;
 
 @Entity
 @Table(name = "profiles")
+@NoArgsConstructor(access = PROTECTED)
 class ProfileEntity {
     @Id
     @GeneratedValue(strategy = SEQUENCE)
@@ -30,17 +32,14 @@ class ProfileEntity {
     @Column(columnDefinition = "text")
     private String avatarUrl;
 
-    protected ProfileEntity() {
-    }
-
     ProfileEntity(UserEntity user, Profile profile) {
         this.user = user;
         update(profile);
     }
 
     void update(Profile profile) {
-        bio = profile.bio();
-        avatarUrl = profile.avatarUrl();
+        bio = profile.getBio();
+        avatarUrl = profile.getAvatarUrl();
     }
 
     Profile toProfile() {

@@ -22,8 +22,13 @@ dependencies {
     implementation 'org.hibernate.orm:hibernate-core:7.4.17.Final'
     runtimeOnly 'org.postgresql:postgresql:42.7.15'
 
+    def lombokCoordinates = 'org.projectlombok:lombok:1.18.48'
+    compileOnly lombokCoordinates
+    annotationProcessor lombokCoordinates
+    testCompileOnly lombokCoordinates
+    testAnnotationProcessor lombokCoordinates
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.testcontainers:testcontainers-postgresql'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

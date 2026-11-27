@@ -1,7 +1,7 @@
 package com.facochico.edu.config;
 
-import com.facochico.edu.user.UserRepository;
-import com.facochico.edu.user.UserService;
+import com.facochico.edu.repository.user.UserRepository;
+import com.facochico.edu.service.user.UserService;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

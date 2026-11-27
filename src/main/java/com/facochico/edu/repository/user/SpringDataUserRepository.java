@@ -1,4 +1,6 @@
-package com.facochico.edu.user.persistence;
+package com.facochico.edu.repository.user;
+
+import com.facochico.edu.domain.user.UserEntity;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;

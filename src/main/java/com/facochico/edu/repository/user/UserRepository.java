@@ -1,4 +1,7 @@
-package com.facochico.edu.user;
+package com.facochico.edu.repository.user;
+
+import com.facochico.edu.domain.user.User;
+import com.facochico.edu.domain.user.UserDetails;
 
 import java.util.Optional;
 

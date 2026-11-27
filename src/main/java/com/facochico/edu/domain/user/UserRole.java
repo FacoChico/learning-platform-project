@@ -1,4 +1,4 @@
-package com.facochico.edu.user;
+package com.facochico.edu.domain.user;
 
 public enum UserRole {
     STUDENT,

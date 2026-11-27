@@ -1,9 +1,9 @@
-package com.facochico.edu.user.persistence;
+package com.facochico.edu.repository.user;
 
-import com.facochico.edu.user.EmailAlreadyInUseException;
-import com.facochico.edu.user.User;
-import com.facochico.edu.user.UserDetails;
-import com.facochico.edu.user.UserRepository;
+import com.facochico.edu.domain.user.User;
+import com.facochico.edu.domain.user.UserDetails;
+import com.facochico.edu.domain.user.UserEntity;
+import com.facochico.edu.domain.user.exception.EmailAlreadyInUseException;
 
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -12,16 +12,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-import static com.facochico.edu.user.persistence.UserEntity.EMAIL_CONSTRAINT;
+import lombok.RequiredArgsConstructor;
+
+import static com.facochico.edu.domain.user.UserEntity.EMAIL_CONSTRAINT;
+import static lombok.AccessLevel.PACKAGE;
 
 @Repository
 @Transactional
+@RequiredArgsConstructor(access = PACKAGE)
 class JpaUserRepository implements UserRepository {
     private final SpringDataUserRepository users;
-
-    JpaUserRepository(SpringDataUserRepository users) {
-        this.users = users;
-    }
 
     @Override
     public User insert(UserDetails details) {
@@ -33,16 +33,16 @@ class JpaUserRepository implements UserRepository {
     @Transactional(readOnly = true)
     public Optional<User> findById(long id) {
         return users.findWithProfileById(id)
-                .map(UserEntity::toUser);
+            .map(UserEntity::toUser);
     }
 
     @Override
     public Optional<User> update(long id, UserDetails details) {
         return users.findWithProfileById(id)
-                .map(user -> {
-                    user.update(details);
-                    return flushAndMap(user);
-                });
+            .map(user -> {
+                user.update(details);
+                return flushAndMap(user);
+            });
     }
 
     @Override
@@ -61,7 +61,7 @@ class JpaUserRepository implements UserRepository {
             users.flush();
         } catch (DataIntegrityViolationException exception) {
             if (exception.getCause() instanceof ConstraintViolationException violation
-                    && EMAIL_CONSTRAINT.equals(violation.getConstraintName())) {
+                && EMAIL_CONSTRAINT.equals(violation.getConstraintName())) {
                 throw new EmailAlreadyInUseException(exception);
             }
             throw exception;

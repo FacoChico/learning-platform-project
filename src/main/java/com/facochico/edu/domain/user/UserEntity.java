@@ -1,8 +1,6 @@
-package com.facochico.edu.user.persistence;
+package com.facochico.edu.domain.user;
 
-import com.facochico.edu.user.User;
-import com.facochico.edu.user.UserDetails;
-import com.facochico.edu.user.UserRole;
+import com.facochico.edu.util.user.UserValidationUtil;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,26 +11,28 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import static com.facochico.edu.user.UserDetails.MAX_EMAIL_LENGTH;
-import static com.facochico.edu.user.UserDetails.MAX_NAME_LENGTH;
+import lombok.NoArgsConstructor;
+
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.SEQUENCE;
+import static lombok.AccessLevel.PROTECTED;
 
 @Entity
 @Table(name = "users", uniqueConstraints = @UniqueConstraint(name = UserEntity.EMAIL_CONSTRAINT, columnNames = "email"))
-class UserEntity {
-    static final String EMAIL_CONSTRAINT = "uk_users_email";
+@NoArgsConstructor(access = PROTECTED)
+public class UserEntity {
+    public static final String EMAIL_CONSTRAINT = "uk_users_email";
 
     @Id
     @GeneratedValue(strategy = SEQUENCE)
     private Long id;
 
-    @Column(nullable = false, length = MAX_NAME_LENGTH)
+    @Column(nullable = false, length = UserValidationUtil.MAX_NAME_LENGTH)
     private String name;
 
-    @Column(nullable = false, length = MAX_EMAIL_LENGTH)
+    @Column(nullable = false, length = UserValidationUtil.MAX_EMAIL_LENGTH)
     private String email;
 
     @Enumerated(STRING)
@@ -42,19 +42,16 @@ class UserEntity {
     @OneToOne(mappedBy = "user", fetch = LAZY, cascade = ALL, orphanRemoval = true)
     private ProfileEntity profile;
 
-    protected UserEntity() {
-    }
-
-    UserEntity(UserDetails details) {
+    public UserEntity(UserDetails details) {
         update(details);
     }
 
-    void update(UserDetails details) {
-        name = details.name();
-        email = details.email();
-        role = details.role();
+    public void update(UserDetails details) {
+        name = details.getName();
+        email = details.getEmail();
+        role = details.getRole();
 
-        final var profileDetails = details.profile();
+        final var profileDetails = details.getProfile();
         if (profileDetails == null) {
             profile = null;
         } else if (profile == null) {
@@ -64,8 +61,10 @@ class UserEntity {
         }
     }
 
-    User toUser() {
-        final var profileDetails = profile == null ? null : profile.toProfile();
+    public User toUser() {
+        final var profileDetails = profile == null
+            ? null
+            : profile.toProfile();
         return new User(id, new UserDetails(name, email, role, profileDetails));
     }
 }
