@@ -1,9 +1,14 @@
 package com.facochico.edu.util.user;
 
+import com.facochico.edu.domain.user.UserRole;
+import com.facochico.edu.domain.user.exception.InvalidStudentRoleException;
+
 import java.util.Locale;
 import java.util.regex.Pattern;
 
 import lombok.experimental.UtilityClass;
+
+import static com.facochico.edu.domain.user.UserRole.STUDENT;
 
 @UtilityClass
 public class UserValidationUtil {
@@ -36,5 +41,11 @@ public class UserValidationUtil {
             throw new IllegalArgumentException(message);
         }
         return value;
+    }
+
+    public void requireStudent(UserRole role) {
+        if (role != STUDENT) {
+            throw new InvalidStudentRoleException();
+        }
     }
 }
