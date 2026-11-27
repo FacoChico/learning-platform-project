@@ -16,10 +16,11 @@ import com.facochico.edu.domain.course.dto.ModuleView;
 import com.facochico.edu.domain.course.exception.CatalogEntryInUseException;
 import com.facochico.edu.domain.course.exception.CourseInUseException;
 import com.facochico.edu.domain.course.exception.CurriculumItemNotFoundException;
+import com.facochico.edu.domain.homework.exception.HomeworkInUseException;
 import com.facochico.edu.domain.user.UserEntity;
 import com.facochico.edu.domain.user.exception.UserNotFoundException;
+import com.facochico.edu.util.persistence.ConstraintViolationUtil;
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 import static com.facochico.edu.domain.course.CourseEntity.CATEGORY_FOREIGN_KEY;
 import static com.facochico.edu.domain.course.CourseEntity.TAG_FOREIGN_KEY;
 import static com.facochico.edu.domain.enrollment.EnrollmentEntity.COURSE_FOREIGN_KEY;
+import static com.facochico.edu.domain.homework.SubmissionEntity.ASSIGNMENT_FOREIGN_KEY;
 import static java.util.Comparator.comparingLong;
 import static java.util.stream.Collectors.toSet;
 import static lombok.AccessLevel.PACKAGE;
@@ -93,10 +95,10 @@ class JpaCourseRepository implements CourseRepository {
         try {
             return deleteAndFlushIfPresent(courses, id);
         } catch (DataIntegrityViolationException exception) {
-            if (violatesConstraint(exception, COURSE_FOREIGN_KEY)) {
+            if (ConstraintViolationUtil.violatesConstraint(exception, COURSE_FOREIGN_KEY)) {
                 throw new CourseInUseException(id, exception);
             }
-            throw exception;
+            throw translateHomeworkDeletion(exception, "Course", id);
         }
     }
 
@@ -134,6 +136,7 @@ class JpaCourseRepository implements CourseRepository {
 
         final var removed = module.get();
         removed.getCourse().removeModule(removed);
+        flushCurriculumDeletion(modules, "Module", id);
         return true;
     }
 
@@ -171,6 +174,7 @@ class JpaCourseRepository implements CourseRepository {
 
         final var removed = lesson.get();
         removed.getModule().removeLesson(removed);
+        flushCurriculumDeletion(lessons, "Lesson", id);
         return true;
     }
 
@@ -312,15 +316,27 @@ class JpaCourseRepository implements CourseRepository {
         try {
             return deleteAndFlushIfPresent(repository, id);
         } catch (DataIntegrityViolationException exception) {
-            if (violatesConstraint(exception, foreignKey)) {
+            if (ConstraintViolationUtil.violatesConstraint(exception, foreignKey)) {
                 throw new CatalogEntryInUseException(resource, id, exception);
             }
             throw exception;
         }
     }
 
-    private static boolean violatesConstraint(DataIntegrityViolationException exception, String constraint) {
-        return exception.getCause() instanceof ConstraintViolationException violation
-            && constraint.equals(violation.getConstraintName());
+    private static void flushCurriculumDeletion(JpaRepository<?, Long> repository, String resource, long id) {
+        try {
+            repository.flush();
+        } catch (DataIntegrityViolationException exception) {
+            throw translateHomeworkDeletion(exception, resource, id);
+        }
+    }
+
+    private static RuntimeException translateHomeworkDeletion(
+        DataIntegrityViolationException exception, String resource, long id
+    ) {
+        if (ConstraintViolationUtil.violatesConstraint(exception, ASSIGNMENT_FOREIGN_KEY)) {
+            return new HomeworkInUseException(resource, id, exception);
+        }
+        return exception;
     }
 }
