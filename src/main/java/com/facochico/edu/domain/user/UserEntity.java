@@ -11,6 +11,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import static jakarta.persistence.CascadeType.ALL;
@@ -25,6 +26,7 @@ import static lombok.AccessLevel.PROTECTED;
 public class UserEntity {
     public static final String EMAIL_CONSTRAINT = "uk_users_email";
 
+    @Getter
     @Id
     @GeneratedValue(strategy = SEQUENCE)
     private Long id;
@@ -35,6 +37,7 @@ public class UserEntity {
     @Column(nullable = false, length = UserValidationUtil.MAX_EMAIL_LENGTH)
     private String email;
 
+    @Getter
     @Enumerated(STRING)
     @Column(nullable = false)
     private UserRole role;
