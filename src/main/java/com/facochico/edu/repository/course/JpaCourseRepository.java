@@ -14,6 +14,7 @@ import com.facochico.edu.domain.course.dto.LessonView;
 import com.facochico.edu.domain.course.dto.ModuleDetails;
 import com.facochico.edu.domain.course.dto.ModuleView;
 import com.facochico.edu.domain.course.exception.CatalogEntryInUseException;
+import com.facochico.edu.domain.course.exception.CourseInUseException;
 import com.facochico.edu.domain.course.exception.CurriculumItemNotFoundException;
 import com.facochico.edu.domain.user.UserEntity;
 import com.facochico.edu.domain.user.exception.UserNotFoundException;
@@ -35,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 
 import static com.facochico.edu.domain.course.CourseEntity.CATEGORY_FOREIGN_KEY;
 import static com.facochico.edu.domain.course.CourseEntity.TAG_FOREIGN_KEY;
+import static com.facochico.edu.domain.enrollment.EnrollmentEntity.COURSE_FOREIGN_KEY;
 import static java.util.Comparator.comparingLong;
 import static java.util.stream.Collectors.toSet;
 import static lombok.AccessLevel.PACKAGE;
@@ -88,7 +90,14 @@ class JpaCourseRepository implements CourseRepository {
 
     @Override
     public boolean deleteCourse(long id) {
-        return deleteIfPresent(courses, id);
+        try {
+            return deleteAndFlushIfPresent(courses, id);
+        } catch (DataIntegrityViolationException exception) {
+            if (violatesConstraint(exception, COURSE_FOREIGN_KEY)) {
+                throw new CourseInUseException(id, exception);
+            }
+            throw exception;
+        }
     }
 
     @Override
@@ -286,13 +295,14 @@ class JpaCourseRepository implements CourseRepository {
         return new LessonView(lesson.getId(), lesson.getModule().getId(), details);
     }
 
-    private static <T> boolean deleteIfPresent(JpaRepository<T, Long> repository, long id) {
+    private static <T> boolean deleteAndFlushIfPresent(JpaRepository<T, Long> repository, long id) {
         final var entity = repository.findById(id);
         if (entity.isEmpty()) {
             return false;
         }
 
         repository.delete(entity.get());
+        repository.flush();
         return true;
     }
 
@@ -300,17 +310,17 @@ class JpaCourseRepository implements CourseRepository {
         JpaRepository<T, Long> repository, long id, String resource, String foreignKey
     ) {
         try {
-            if (!deleteIfPresent(repository, id)) {
-                return false;
-            }
-            repository.flush();
-            return true;
+            return deleteAndFlushIfPresent(repository, id);
         } catch (DataIntegrityViolationException exception) {
-            if (exception.getCause() instanceof ConstraintViolationException violation
-                && foreignKey.equals(violation.getConstraintName())) {
+            if (violatesConstraint(exception, foreignKey)) {
                 throw new CatalogEntryInUseException(resource, id, exception);
             }
             throw exception;
         }
+    }
+
+    private static boolean violatesConstraint(DataIntegrityViolationException exception, String constraint) {
+        return exception.getCause() instanceof ConstraintViolationException violation
+            && constraint.equals(violation.getConstraintName());
     }
 }

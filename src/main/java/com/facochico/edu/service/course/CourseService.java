@@ -10,6 +10,7 @@ import com.facochico.edu.domain.course.dto.ModuleDetails;
 import com.facochico.edu.domain.course.dto.ModuleView;
 import com.facochico.edu.domain.course.exception.CurriculumItemNotFoundException;
 import com.facochico.edu.repository.course.CourseRepository;
+import com.facochico.edu.util.PaginationValidationUtil;
 import com.facochico.edu.util.course.CurriculumValidationUtil;
 
 import java.util.List;
@@ -30,7 +31,7 @@ public class CourseService {
     }
 
     public List<CourseSummary> listCourses(int page, int size) {
-        CurriculumValidationUtil.requirePage(page, size);
+        PaginationValidationUtil.requirePage(page, size);
         return courses.listCourses(page, size);
     }
 
