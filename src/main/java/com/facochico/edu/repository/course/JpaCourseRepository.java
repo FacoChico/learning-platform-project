@@ -17,6 +17,7 @@ import com.facochico.edu.domain.course.exception.CatalogEntryInUseException;
 import com.facochico.edu.domain.course.exception.CourseInUseException;
 import com.facochico.edu.domain.course.exception.CurriculumItemNotFoundException;
 import com.facochico.edu.domain.homework.exception.HomeworkInUseException;
+import com.facochico.edu.domain.quiz.exception.QuizInUseException;
 import com.facochico.edu.domain.user.UserEntity;
 import com.facochico.edu.domain.user.exception.UserNotFoundException;
 import com.facochico.edu.util.persistence.ConstraintViolationUtil;
@@ -39,6 +40,7 @@ import static com.facochico.edu.domain.course.CourseEntity.CATEGORY_FOREIGN_KEY;
 import static com.facochico.edu.domain.course.CourseEntity.TAG_FOREIGN_KEY;
 import static com.facochico.edu.domain.enrollment.EnrollmentEntity.COURSE_FOREIGN_KEY;
 import static com.facochico.edu.domain.homework.SubmissionEntity.ASSIGNMENT_FOREIGN_KEY;
+import static com.facochico.edu.domain.quiz.QuizSubmissionEntity.QUIZ_FOREIGN_KEY;
 import static java.util.Comparator.comparingLong;
 import static java.util.stream.Collectors.toSet;
 import static lombok.AccessLevel.PACKAGE;
@@ -98,7 +100,7 @@ class JpaCourseRepository implements CourseRepository {
             if (ConstraintViolationUtil.violatesConstraint(exception, COURSE_FOREIGN_KEY)) {
                 throw new CourseInUseException(id, exception);
             }
-            throw translateHomeworkDeletion(exception, "Course", id);
+            throw translateCurriculumDeletion(exception, "Course", id);
         }
     }
 
@@ -327,15 +329,18 @@ class JpaCourseRepository implements CourseRepository {
         try {
             repository.flush();
         } catch (DataIntegrityViolationException exception) {
-            throw translateHomeworkDeletion(exception, resource, id);
+            throw translateCurriculumDeletion(exception, resource, id);
         }
     }
 
-    private static RuntimeException translateHomeworkDeletion(
+    private static RuntimeException translateCurriculumDeletion(
         DataIntegrityViolationException exception, String resource, long id
     ) {
         if (ConstraintViolationUtil.violatesConstraint(exception, ASSIGNMENT_FOREIGN_KEY)) {
             return new HomeworkInUseException(resource, id, exception);
+        }
+        if (ConstraintViolationUtil.violatesConstraint(exception, QUIZ_FOREIGN_KEY)) {
+            return new QuizInUseException(resource, id, exception);
         }
         return exception;
     }
