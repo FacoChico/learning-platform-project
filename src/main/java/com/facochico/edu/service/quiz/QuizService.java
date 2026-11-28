@@ -48,6 +48,10 @@ public class QuizService {
         return quizzes.takeQuiz(quizId, studentId, selectedOptions, takenAt);
     }
 
+    public QuizSubmissionView findResultById(long id, long actorId) {
+        return quizzes.findResultById(id, actorId);
+    }
+
     public List<QuizSubmissionView> listResultsByQuiz(long quizId, long teacherId, int page, int size) {
         PaginationValidationUtil.requirePage(page, size);
         return quizzes.listResultsByQuiz(quizId, teacherId, page, size);

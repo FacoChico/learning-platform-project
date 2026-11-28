@@ -3,13 +3,17 @@ package com.facochico.edu.repository.user;
 import com.facochico.edu.domain.user.User;
 import com.facochico.edu.domain.user.UserDetails;
 import com.facochico.edu.domain.user.UserEntity;
+import com.facochico.edu.domain.user.UserRole;
+import com.facochico.edu.domain.user.dto.UserSummary;
 import com.facochico.edu.domain.user.exception.EmailAlreadyInUseException;
 
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
@@ -34,6 +38,15 @@ class JpaUserRepository implements UserRepository {
     public Optional<User> findById(long id) {
         return users.findWithProfileById(id)
             .map(UserEntity::toUser);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserSummary> listUsers(UserRole role, int page, int size) {
+        final var pageable = PageRequest.of(page, size);
+        return role == null
+            ? users.findAllProjectedByOrderById(pageable)
+            : users.findByRoleOrderById(role, pageable);
     }
 
     @Override

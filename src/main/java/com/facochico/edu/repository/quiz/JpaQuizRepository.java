@@ -40,6 +40,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 
 import static com.facochico.edu.domain.quiz.QuizSubmissionEntity.QUIZ_FOREIGN_KEY;
+import static com.facochico.edu.domain.user.UserRole.STUDENT;
 import static com.facochico.edu.domain.user.UserRole.TEACHER;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static lombok.AccessLevel.PACKAGE;
@@ -128,6 +129,20 @@ class JpaQuizRepository implements QuizRepository {
 
     @Override
     @Transactional(readOnly = true)
+    public QuizSubmissionView findResultById(long id, long actorId) {
+        final var result = submissions.findById(id)
+            .orElseThrow(() -> new QuizNotFoundException("Quiz result %d was not found".formatted(id)));
+        final var actor = requireUser(actorId);
+        final var isSubmittingStudent = actor.getRole() == STUDENT && result.getStudent().getId().equals(actor.getId());
+
+        if (!isSubmittingStudent && !isCourseTeacher(result.getQuiz().getModule(), actor)) {
+            throw new QuizAccessDeniedException("Only the submitting student or course teacher may view the quiz result");
+        }
+        return toSubmissionView(result);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<QuizSubmissionView> listResultsByQuiz(long quizId, long teacherId, int page, int size) {
         final var quiz = quizzes.findById(quizId)
             .orElseThrow(() -> quizNotFound(quizId));
@@ -170,12 +185,13 @@ class JpaQuizRepository implements QuizRepository {
     }
 
     private void requireCourseTeacher(ModuleEntity module, long teacherId) {
-        final var teacher = requireUser(teacherId);
-        final var isCourseTeacher = teacher.getRole() == TEACHER
-            && module.getCourse().getTeacher().getId().equals(teacher.getId());
-        if (!isCourseTeacher) {
+        if (!isCourseTeacher(module, requireUser(teacherId))) {
             throw new QuizAccessDeniedException("Only the course teacher may manage its quizzes and results");
         }
+    }
+
+    private static boolean isCourseTeacher(ModuleEntity module, UserEntity user) {
+        return user.getRole() == TEACHER && module.getCourse().getTeacher().getId().equals(user.getId());
     }
 
     private UserEntity requireEnrolledStudent(ModuleEntity module, long studentId) {
