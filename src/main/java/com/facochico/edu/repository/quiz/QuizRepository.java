@@ -23,6 +23,8 @@ public interface QuizRepository {
 
     QuizSubmissionView takeQuiz(long quizId, long studentId, Map<Long, Long> answers, Instant takenAt);
 
+    QuizSubmissionView findResultById(long id, long actorId);
+
     List<QuizSubmissionView> listResultsByQuiz(long quizId, long teacherId, int page, int size);
 
     List<QuizSubmissionView> listResultsByStudent(long studentId, int page, int size);

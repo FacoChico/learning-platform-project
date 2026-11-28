@@ -2,6 +2,7 @@ package com.facochico.edu.service.course;
 
 import com.facochico.edu.domain.course.dto.CourseReviewDetails;
 import com.facochico.edu.domain.course.dto.CourseReviewView;
+import com.facochico.edu.domain.course.exception.CourseReviewAccessDeniedException;
 import com.facochico.edu.domain.course.exception.CourseReviewNotFoundException;
 import com.facochico.edu.repository.course.CourseReviewRepository;
 import com.facochico.edu.util.PaginationValidationUtil;
@@ -42,6 +43,22 @@ public class CourseReviewService {
     public void deleteReview(long id) {
         if (!reviews.deleteReview(id)) {
             throw new CourseReviewNotFoundException(id);
+        }
+    }
+
+    public CourseReviewView updateReview(long id, long authorId, CourseReviewDetails details) {
+        requireAuthor(id, authorId);
+        return updateReview(id, details);
+    }
+
+    public void deleteReview(long id, long authorId) {
+        requireAuthor(id, authorId);
+        deleteReview(id);
+    }
+
+    private void requireAuthor(long id, long authorId) {
+        if (findReviewById(id).studentId() != authorId) {
+            throw new CourseReviewAccessDeniedException();
         }
     }
 }

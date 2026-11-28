@@ -19,6 +19,8 @@ repositories {
 dependencies {
     implementation platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.hibernate.orm:hibernate-core:7.4.17.Final'
     runtimeOnly 'org.postgresql:postgresql:42.7.15'
 
@@ -29,6 +31,7 @@ dependencies {
     testAnnotationProcessor lombokCoordinates
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.testcontainers:testcontainers-postgresql'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
